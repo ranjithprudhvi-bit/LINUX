@@ -1,0 +1,127 @@
+To accommodate the backup agent tool's specifications, the system admin team at xFusionCorp Industries requires the creation of a user with a non-interactive shell. Here's your task: Create a user named mariyam with a non-interactive shell on App Server 2.
+
+Create a Non-Interactive User on App Server 2
+1. Task Overview
+
+As part of system administration requirements at xFusionCorp Industries, a user account needed to be created for a backup agent tool. The requirement specified that the user must have a non-interactive shell, ensuring that the account cannot be used for direct login while still being available for system-level operations.
+
+2. Objective
+
+Create a user named mariyam
+
+Perform the task on App Server 2 (stapp02)
+
+Assign a non-interactive shell to the user
+
+Follow Linux security best practices
+
+3. Environment Details
+Component	Details
+Server Name	stapp02
+Hostname	stapp02.stratos.xfusioncorp.com
+Server Role	Nautilus Application Server 2
+OS Type	Linux
+Access Method	SSH via Jump Server
+4. Background Knowledge
+What is a Non-Interactive Shell?
+
+A non-interactive shell prevents a user from logging into the system via SSH or console. Such users are commonly created for:
+
+Backup agents
+
+Monitoring tools
+
+System services
+
+Common Non-Interactive Shells
+
+/sbin/nologin (Preferred & secure)
+
+/bin/false (Fallback option)
+
+5. Step-by-Step Execution
+Step 1: Login to App Server 2
+ssh steve@stapp02
+
+Explanation:
+
+Connects to App Server 2 using the provided user credentials.
+
+Step 2: Switch to Root User
+sudo -i
+
+Explanation:
+
+Opens a root login shell.
+
+Required to perform administrative tasks like user creation.
+
+Step 3: Create the User with Non-Interactive Shell
+useradd -s /sbin/nologin mariyam
+
+Explanation:
+
+useradd → Command to create a new user
+
+-s /sbin/nologin → Assigns a non-interactive shell
+
+mariyam → Username
+
+This ensures the user cannot log in interactively.
+
+Step 4: Verify User Creation
+getent passwd mariyam
+
+Expected Output (example):
+
+mariyam:x:1005:1005::/home/mariyam:/sbin/nologin
+
+Verification Points:
+
+User exists
+
+Assigned shell is /sbin/nologin
+
+6. Validation Checks
+Confirm Shell Exists on System
+ls -l /sbin/nologin
+Confirm It Is an Approved Shell
+cat /etc/shells
+
+Both checks confirm that /sbin/nologin is valid and available.
+
+7. Errors Faced
+
+❌ No errors were encountered during execution.
+
+8. Security Considerations
+
+Prevents unauthorized SSH access
+
+Limits attack surface
+
+Follows principle of least privilege
+
+Ideal for service and automation accounts
+
+9. Final Outcome
+
+✅ User mariyam successfully created
+✅ Non-interactive shell assigned
+✅ Task completed as per requirement
+
+10. Key Learnings
+
+How to create service users securely in Linux
+
+Importance of non-interactive shells
+
+Usage of /sbin/nologin in enterprise environments
+
+Verification using getent and /etc/shells
+
+11. Conclusion
+
+This task demonstrates a real-world Linux system administration scenario commonly encountered in production environments. Creating non-interactive users is a fundamental security practice, especially when dealing with automated tools such as backup agents.
+
+🔗 This report is intended for documentation and learning purposes and can be included in a GitHub repository as part of a DevOps/Linux administration portfolio.
