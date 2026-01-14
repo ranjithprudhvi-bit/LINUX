@@ -1,0 +1,197 @@
+In response to the latest tool implementation at xFusionCorp Industries, the system admins require the creation of a service user account. Here are the specifics:
+Create a user named mark in App Server 1 without a home director
+
+What is the task?
+
+Create a Linux user account named mark on App Server 1 (stapp01) without creating a home directory.
+
+🔹 Why is this required in a real-world enterprise?
+
+In enterprise environments, service users are commonly created for:
+
+Running applications or background services
+
+Tool integrations (monitoring, deployment agents, schedulers)
+
+Restricted-access automation accounts
+
+These users:
+
+Do not require login shells
+
+Do not require home directories
+
+Follow the principle of least privilege
+
+Creating a user without a home directory:
+
+Reduces disk usage
+
+Minimizes attack surface
+
+Prevents misuse for interactive login
+
+🔹 Which server does this apply to and why?
+
+Server: stapp01 (App Server 1)
+
+Reason:
+The task explicitly targets App Server 1, which is part of the Application Tier (LAMP stack) in Project Nautilus.
+
+2️⃣ Prerequisites & Assumptions
+🔹 Required Access
+
+Root or sudo privileges
+
+User creation modifies /etc/passwd, /etc/shadow, /etc/group
+
+🔹 Required Services / Files
+
+Standard Linux user management utilities:
+
+useradd
+
+id
+
+/etc/passwd
+
+🔹 Pre-Checks (Best Practice)
+
+Before creating the user:
+
+Ensure you are on the correct server
+
+Ensure the user does not already exist
+
+hostname
+id mark
+
+3️⃣ Exact Commands (Step-by-Step)
+✅ Step 1: Switch to Root (Production Safe)
+sudo -i
+
+Explanation:
+
+Opens a root login shell
+
+Ensures full administrative privileges
+
+Preferred over repeated sudo usage in admin tasks
+
+✅ Step 2: Create the User Without Home Directory
+useradd -M mark
+
+Line-by-Line Explanation:
+
+useradd → Standard Linux utility to create users
+
+-M → Do NOT create a home directory
+
+mark → Username
+
+Why this is the best choice:
+
+useradd is non-interactive, scriptable, and enterprise-safe
+
+-M strictly enforces the requirement
+
+Avoids unnecessary files under /home
+
+4️⃣ Verification & Validation
+🔹 Verify User Exists
+id mark
+
+Expected Output:
+uid=1005(mark) gid=1005(mark) groups=1005(mark)
+
+
+✔ Confirms:
+
+User exists
+
+UID and GID assigned correctly
+
+🔹 Confirm No Home Directory Was Created
+ls -ld /home/mark
+
+Expected Output:
+ls: cannot access '/home/mark': No such file or directory
+
+
+✔ Confirms:
+
+No home directory exists (as required)
+
+🔹 Verify /etc/passwd Entry
+grep '^mark:' /etc/passwd
+
+Example Output:
+mark:x:1005:1005::/home/mark:/bin/bash
+
+
+⚠️ Note:
+Even if /home/mark appears in /etc/passwd, no directory exists, which is acceptable unless explicitly restricted.
+
+5️⃣ Errors & Troubleshooting
+❌ Error 1: User Already Exists
+useradd: user 'mark' already exists
+
+Fix:
+id mark
+
+
+If user exists and must be recreated:
+
+userdel mark
+useradd -M mark
+
+❌ Error 2: Permission Denied
+useradd: Permission denied
+
+Cause:
+
+Command run without root privileges
+
+Fix:
+sudo -i
+
+❌ Error 3: Wrong Server
+
+Creating the user on the wrong app server.
+
+Fix:
+hostname
+
+
+Ensure output is:
+
+stapp01
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+No home directory → no writable personal space
+
+Reduces risk of:
+
+Credential storage
+
+Malicious scripts
+
+Unauthorized SSH usage
+
+✅ Best Practices Followed
+
+Principle of least privilege
+
+Non-interactive service account design
+
+Minimal filesystem footprint
+
+No unnecessary login environment
+
+🔁 Alternatives (When Needed)
+Scenario	Alternative
+Service must not login	-s /sbin/nologin
+System service account	useradd -r mark
+Automation account	No home + restricted shell
