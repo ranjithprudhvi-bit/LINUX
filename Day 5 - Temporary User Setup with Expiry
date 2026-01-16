@@ -1,0 +1,209 @@
+Task Description (Exact Requirement)
+
+Create a user named james on App Server 2 in the Stratos Datacenter.
+Set the account expiry date to 2026-12-07, ensuring the username is created in lowercase as per standard protocol.
+
+1️⃣ Task Understanding
+🔹 What is the task?
+
+The task involves creating a temporary Linux user account named james on stapp02, with a predefined account expiry date.
+
+Once the expiry date is reached, the user account will automatically be disabled by the system.
+
+🔹 Why is this required in a real-world enterprise environment?
+
+In enterprise environments like xFusionCorp Industries:
+
+Temporary developers, consultants, or auditors often require time-bound access
+
+Manual account removal is error-prone and may be forgotten
+
+Expiry-based accounts:
+
+Enforce least privilege
+
+Reduce security risks
+
+Ensure compliance with audit and access policies
+
+This approach supports IAM (Identity & Access Management) best practices.
+
+🔹 Which server does this task apply to and why?
+
+Server: App Server 2 (stapp02)
+
+Reason:
+The requirement explicitly states that access is needed only on App Server 2, likely because:
+
+The developer is working on a specific application component
+
+Limiting access prevents lateral movement across servers
+
+2️⃣ Prerequisites & Assumptions
+🔐 Required Access Level
+
+Root or sudo access is required
+(User creation and account expiry settings are privileged operations)
+
+📂 Required Services / Files
+
+Standard Linux user management utilities:
+
+/usr/sbin/useradd
+
+/etc/passwd
+
+/etc/shadow
+
+(No additional services are required)
+
+✅ Pre-Checks Before Starting
+
+Confirm you are on the correct server:
+
+hostname
+
+
+Expected:
+
+stapp02
+
+
+Ensure the user does not already exist:
+
+id james
+
+
+Expected:
+
+id: james: no such user
+
+3️⃣ Exact Commands (Step-by-Step)
+🔹 Step 1: Switch to Root (if not already)
+sudo -i
+
+
+Explanation:
+
+Opens a root shell
+
+Required for user and account policy management
+
+Why this is best:
+
+Avoids permission issues
+
+Ensures full auditability
+
+🔹 Step 2: Create the User with Expiry Date
+useradd -e 2026-12-07 james
+
+🔍 Command Breakdown
+Component	Meaning
+useradd	Standard Linux command to create users
+-e 2026-12-07	Sets account expiry date (YYYY-MM-DD format)
+james	Username (lowercase as per policy)
+✅ Why this is the best choice
+
+Native Linux tool (enterprise standard)
+
+Expiry enforced at OS level
+
+No cron jobs or manual cleanup required
+
+4️⃣ Verification & Validation
+🔹 Verify User Creation
+id james
+
+
+Expected Output:
+
+uid=1005(james) gid=1005(james) groups=1005(james)
+
+🔹 Verify Account Expiry Date
+chage -l james
+
+
+Expected Output:
+
+Account expires                                        : Dec 07, 2026
+Password expires                                       : never
+Password inactive                                      : never
+Account inactive                                       : never
+
+🔹 Confirm Entry in System Files
+grep james /etc/passwd
+
+
+Expected Output:
+
+james:x:1005:1005::/home/james:/bin/bash
+
+
+✔ Confirms the user is properly registered
+
+5️⃣ Errors & Troubleshooting
+❌ Error 1: User Already Exists
+useradd: user 'james' already exists
+
+
+✅ Fix:
+
+userdel -r james
+
+
+(Only after confirming it’s safe to remove)
+
+❌ Error 2: Invalid Date Format
+useradd: invalid date format
+
+
+✅ Fix:
+
+Ensure format is YYYY-MM-DD
+
+useradd -e 2026-12-07 james
+
+❌ Error 3: Permission Denied
+useradd: Permission denied
+
+
+✅ Fix:
+
+sudo useradd -e 2026-12-07 james
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+Prevents orphaned accounts
+
+Reduces attack surface
+
+Supports audit and compliance (ISO / SOC)
+
+✅ Why this approach is recommended
+
+OS-level enforcement
+
+No dependency on manual processes
+
+Fully auditable
+
+🔄 Alternative (Not Recommended Here)
+chage -E 2026-12-07 james
+
+
+✔ Works only after user creation
+❌ Two-step process (less clean)
+
+7️⃣ Final Task Summary
+
+✅ User created: james
+
+🖥️ Server: App Server 2 (stapp02)
+
+⏳ Expiry date: 2026-12-07
+
+🔐 Access: Temporary, policy-compliant
+
+📊 Status: ✅ Successful
