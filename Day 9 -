@@ -1,0 +1,136 @@
+In a bid to automate backup processes, the xFusionCorp Industries sysadmin team has developed a new bash script named xfusioncorp.sh. While the script has been distributed to all necessary servers, it lacks executable permissions on App Server 2 within the Stratos Datacenter.
+
+Your task is to grant executable permissions to the /tmp/xfusioncorp.sh script on App Server 2. Additionally, ensure that all users have the capability to execute it.
+
+Task Understanding
+
+Task:
+Grant executable permissions to the /tmp/xfusioncorp.sh script on App Server 2 (stapp02) so that all users can run it.
+
+Why it's required in enterprise environments:
+
+Scripts like xfusioncorp.sh are often used for automated tasks, such as backups, monitoring, or maintenance.
+
+If the script lacks execution permissions, automation fails, which can disrupt business-critical processes (e.g., nightly backups).
+
+Ensuring all users can execute the script is useful if multiple team members or automated jobs (cron, Jenkins) need to run it.
+
+Server(s) involved:
+
+App Server 2 (stapp02) – because this is where the script exists and lacks executable permission.
+
+Not touching other servers unless required, following the principle of minimal changes in production.
+
+2️⃣ Prerequisites & Assumptions
+Prerequisite	Details
+User Access	sudo access or root account (normal users cannot change permissions in /tmp for all users)
+Required Files	/tmp/xfusioncorp.sh must exist. Check with ls -l /tmp/xfusioncorp.sh
+Services	None required to change permissions
+Checks before starting	Verify script exists and current permissions using ls -l /tmp/xfusioncorp.sh
+
+Example check:
+
+ls -l /tmp/xfusioncorp.sh
+
+
+Expected output (example):
+
+-rw-r--r-- 1 natasha natasha 2048 Jan 19 08:00 /tmp/xfusioncorp.sh
+
+
+Here, -rw-r--r-- means no execute permissions.
+
+3️⃣ Exact Commands (Step-by-Step)
+
+Step 1: Switch to root or use sudo
+
+sudo -i
+
+
+sudo -i → gives root shell to safely execute privileged commands.
+
+Why best: avoids repeated sudo before each command, standard in enterprise tasks.
+
+Step 2: Grant execute permissions to all users
+
+chmod a+x /tmp/xfusioncorp.sh
+
+
+Breakdown:
+
+chmod → change file mode/permissions
+
+a+x → a = all users (owner, group, others), +x = add execute permission
+
+/tmp/xfusioncorp.sh → path to the script
+
+Why best: explicitly grants execute to everyone without changing other permissions (safer than chmod 777).
+
+Step 3: Verify permissions
+
+ls -l /tmp/xfusioncorp.sh
+
+
+Expected output:
+
+-rwxr-xr-x 1 natasha natasha 2048 Jan 19 08:00 /tmp/xfusioncorp.sh
+
+
+rwxr-xr-x → owner has read/write/execute, group and others have read/execute. ✅
+
+4️⃣ Verification & Validation
+
+Test execution as any user
+
+su - natasha
+/tmp/xfusioncorp.sh
+
+
+Script should run without “Permission denied” errors.
+
+If successful, all users can execute it.
+
+Optional validation
+
+stat /tmp/xfusioncorp.sh
+
+
+Confirms detailed permission info (Access: 0755)
+
+5️⃣ Errors & Troubleshooting
+Error	Cause	Fix
+Permission denied	Forgot sudo	Use sudo chmod a+x /tmp/xfusioncorp.sh
+No such file or directory	Script not present	Confirm with ls /tmp or copy script to /tmp
+Script fails to run	Missing shebang (#!/bin/bash)	Add first line: #!/bin/bash
+
+Pro tip: Always check file ownership. If script owned by root, all users still need x to execute.
+
+6️⃣ Security & Best Practices
+
+Security implications:
+
+Giving execute to all users (a+x) is safe if the script is trusted.
+
+Avoid chmod 777 – allows write for everyone (dangerous).
+
+Keep scripts in /usr/local/bin for global execution in production; /tmp is temporary.
+
+Recommended approach:
+
+chmod a+x is minimal, safe, and transparent.
+
+Validate script content before allowing all users to run.
+
+Alternative:
+
+Only grant x to specific group instead of all users if stricter control needed.
+
+7️⃣ Final Task Summary
+
+Action: Granted execute permission for all users on xfusioncorp.sh
+
+Server: App Server 2 (stapp02)
+
+Result: Script is now executable by everyone
+
+Status: ✅ Successful
