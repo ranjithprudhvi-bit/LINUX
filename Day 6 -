@@ -1,0 +1,176 @@
+Due to an accidental data mix-up, user data was unintentionally mingled on Nautilus App Server 2 at the /home/usersdata location by the Nautilus production support team in Stratos DC. To rectify this, specific user data needs to be filtered and relocated. Here are the details:
+
+Locate all files (excluding directories) owned by user ravi within the /home/usersdata directory on App Server 2. Copy these files while preserving the directory structure to the /official directory.
+
+Task Overview
+
+Due to an accidental data mix-up on Nautilus App Server 2 (stapp02), user-owned files were incorrectly placed under a shared directory: /home/usersdata. The objective of this task is to identify all files (excluding directories) owned by user ravi and safely copy them to /official while preserving the original directory structure.
+
+This operation must be performed in a production-safe, auditable, and non-destructive manner, following enterprise Linux best practices.
+
+Environment Details
+
+Project: Nautilus (xFusionCorp Industries)
+
+Datacenter: Stratos DC (North America)
+
+Target Server: App Server 2 (stapp02)
+
+OS: Enterprise Linux
+
+Affected Path: /home/usersdata
+
+Destination Path: /official
+
+User of Interest: ravi
+
+Task Understanding
+What is being done
+
+Locate all regular files owned by user ravi under /home/usersdata.
+
+Exclude directories.
+
+Copy the files to /official.
+
+Preserve the original directory hierarchy.
+
+Why this is required
+
+In enterprise environments, improper user data segregation can cause:
+
+Security breaches
+
+Compliance violations
+
+Accidental data loss
+
+Ownership and access control issues
+
+This task restores data integrity and ownership boundaries without modifying the source data.
+
+Why App Server 2
+
+The incident occurred specifically on Nautilus App Server 2, making it the only affected node.
+
+Prerequisites & Assumptions
+Required Access
+
+sudo or root access (required to read user-owned files and write to /official)
+
+Preconditions
+
+User ravi exists on the system
+
+/official directory exists and has sufficient space
+
+Filesystem is healthy (no read-only mounts)
+
+Pre-Checks
+id ravi
+ls -ld /home/usersdata /official
+Commands & Explanations
+Step 1: Dry-run – Identify files owned by ravi
+sudo find /home/usersdata -type f -user ravi
+
+Explanation:
+
+find: Enterprise-standard file discovery tool
+
+/home/usersdata: Search root
+
+-type f: Limits results to regular files only
+
+-user ravi: Filters files owned by user ravi
+
+Why this command: Non-invasive verification before performing copy operations.
+
+Step 2: Copy files while preserving directory structure
+sudo find /home/usersdata -type f -user ravi -exec cp --parents {} /official \;
+
+Explanation (line-by-line):
+
+sudo: Required for permission consistency
+
+find /home/usersdata: Source directory
+
+-type f: Ensures directories are excluded
+
+-user ravi: Filters correct ownership
+
+-exec cp: Executes copy operation
+
+--parents: Preserves full directory structure
+
+{}: Placeholder for each matched file
+
+/official: Destination directory
+
+Why this is best practice:
+
+Non-destructive (copy, not move)
+
+Structure preservation avoids manual recreation
+
+No reliance on temporary files
+
+Verification & Validation
+Verify copied files
+sudo find /official -type f -user ravi
+Compare counts
+sudo find /home/usersdata -type f -user ravi | wc -l
+sudo find /official -type f -user ravi | wc -l
+
+Expected Result:
+
+File counts must match
+
+No errors during execution
+
+Spot-check directory structure
+ls -R /official/home/usersdata
+Errors & Troubleshooting
+Common Issues
+Error	Cause	Fix
+Permission denied	Insufficient privileges	Use sudo
+cp: cannot create file	Missing destination dir	Create /official
+No files found	Wrong username or path	Revalidate user & directory
+Security & Best Practices
+
+Files are copied, not moved, ensuring rollback safety
+
+Ownership remains intact
+
+No permission changes applied
+
+Minimal system impact
+
+Alternatives
+
+rsync --files-from (useful for very large datasets)
+
+Snapshot-based recovery (if filesystem supports it)
+
+Final Task Summary
+
+Action: Copied ravi-owned files
+
+Source: /home/usersdata
+
+Destination: /official
+
+Server: Nautilus App Server 2 (stapp02)
+
+Result: Directory structure preserved
+
+Status: ✅ Successful
+
+Learnings
+
+Safe data segregation in production
+
+Advanced usage of find with cp --parents
+
+Importance of dry-runs and validation
+
+Enterprise-grade Linux file handling
