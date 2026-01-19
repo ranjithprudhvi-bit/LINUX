@@ -1,0 +1,262 @@
+After conducting a security audit within the Stratos DC, the Nautilus security team discovered misconfigured permissions on critical files. To address this, corrective actions are being taken by the production support team. Specifically, the file named /etc/hosts on Nautilus App 1 server requires adjustments to its Access Control Lists (ACLs) as follows: 1. The file's user owner and group owner should be set to root. 2. Others should possess read only permissions on the file. 3. User mark must not have any permissions on the file. 4. User jerome should be granted read only permission on the file.
+
+Fix ACL Permissions on /etc/hosts
+
+Server: Nautilus App 1 (stapp01)
+Role Perspective: Senior Linux System Administrator – Project Nautilus
+
+1️⃣ Task Understanding
+🔹 What is the task?
+
+We must correct file ownership, standard permissions, and ACL permissions on the critical system file:
+
+/etc/hosts
+
+
+Specifically:
+
+User owner → root
+
+Group owner → root
+
+Others → read-only
+
+User mark → no permissions
+
+User jerome → read-only permission
+
+This involves both traditional Linux permissions and Access Control Lists (ACLs).
+
+🔹 Why is this required in real enterprises?
+
+/etc/hosts affects hostname resolution
+
+Incorrect permissions can:
+
+Allow unauthorized modification
+
+Break application networking
+
+Introduce security vulnerabilities
+
+Security audits often flag ACL misconfigurations
+
+Compliance standards (ISO, SOC2, CIS) require:
+
+Least privilege
+
+Explicit access control
+
+Audit-friendly permission models
+
+🔹 Which server does this apply to and why?
+
+Server: Nautilus App 1 (stapp01)
+
+Reason:
+
+App servers resolve DB, LB, and internal services
+
+/etc/hosts is frequently used in enterprise environments for internal name resolution overrides
+
+2️⃣ Prerequisites & Assumptions
+🔐 Required Access
+
+root user or sudo privileges
+
+/etc/hosts is a protected system file
+
+ACL changes require elevated permissions
+
+📁 Required Files & Services
+
+File must exist:
+
+/etc/hosts
+
+
+ACL support must be enabled (default on modern RHEL/CentOS/Ubuntu)
+
+🔍 Important Checks Before Starting
+ls -l /etc/hosts
+getfacl /etc/hosts
+
+
+Purpose:
+
+Confirm current ownership
+
+Detect existing ACLs
+
+Avoid accidental permission lockout
+
+3️⃣ Exact Commands (Step-by-Step)
+🟢 Step 1: Switch to root (recommended)
+sudo -i
+
+
+Why:
+Avoids partial privilege failures and ensures consistent audit logs.
+
+🟢 Step 2: Set user & group owner to root
+chown root:root /etc/hosts
+
+
+Explanation:
+
+chown → change ownership
+
+root:root → user = root, group = root
+
+/etc/hosts → target file
+
+Why best practice:
+System configuration files must always be owned by root to prevent privilege escalation.
+
+🟢 Step 3: Set standard permissions (Others = read-only)
+chmod 644 /etc/hosts
+
+
+Permission breakdown:
+
+6 → owner → read + write
+4 → group → read
+4 → others → read
+
+
+Why:
+
+Prevents accidental edits
+
+Still allows system processes to read the file
+
+🟢 Step 4: Remove all permissions for user mark
+setfacl -m u:mark:--- /etc/hosts
+
+
+Explanation:
+
+setfacl → manage ACLs
+
+-m → modify ACL
+
+u:mark:--- → no read/write/execute
+
+Why ACL instead of chmod?
+Because chmod affects all users, while ACL targets specific users.
+
+🟢 Step 5: Grant read-only permission to user jerome
+setfacl -m u:jerome:r-- /etc/hosts
+
+
+Explanation:
+
+Explicit read access
+
+No write or execute permission
+
+Why:
+Allows controlled visibility without modification risk.
+
+4️⃣ Verification & Validation
+🔍 Check ownership & standard permissions
+ls -l /etc/hosts
+
+
+Expected output:
+
+-rw-r--r--+ 1 root root ... /etc/hosts
+
+
+👉 + indicates ACLs are present (important!)
+
+🔍 Check ACL entries
+getfacl /etc/hosts
+
+
+Expected ACL output:
+
+# file: etc/hosts
+# owner: root
+# group: root
+user::rw-
+user:mark:---
+user:jerome:r--
+group::r--
+mask::r--
+other::r--
+
+
+✔ Confirms:
+
+mark → no access
+
+jerome → read-only
+
+others → read-only
+
+🔍 Confirm no errors
+setfacl --test -m u:jerome:r-- /etc/hosts
+
+
+If no output → no errors.
+
+5️⃣ Errors & Troubleshooting
+❌ Error: setfacl: command not found
+
+Fix:
+
+yum install acl -y
+# or
+apt install acl -y
+
+❌ Error: Operation not permitted
+
+Cause: Not root
+Fix:
+
+sudo -i
+
+❌ ACL overwritten by chmod
+
+Reason:
+chmod changes mask implicitly
+Fix:
+Reapply ACL after chmod (correct order matters)
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+Prevents unauthorized file tampering
+
+Ensures traceable, auditable access
+
+Protects hostname resolution integrity
+
+✅ Why this approach is recommended
+
+Combines traditional permissions + ACL
+
+Least privilege model
+
+Enterprise-compliant
+
+Easily auditable
+
+🔄 Alternatives
+
+SELinux file contexts (advanced)
+
+Immutable flag (chattr +i) – not recommended here due to operational flexibility needs
+
+7️⃣ Final Task Summary
+
+Action: Corrected ownership, permissions, and ACLs
+
+Server: Nautilus App 1 (stapp01)
+
+File: /etc/hosts
+
+Result: Secure, audit-compliant access control applied
+
+Status: ✅ Successful
