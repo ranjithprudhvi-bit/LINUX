@@ -1,0 +1,266 @@
+Within the Stratos DC, the Nautilus storage server hosts a directory named /data, serving as a repository for various developers non-confidential data. Developer mariyam has requested a copy of their data stored in /data/mariyam. The System Admin team has provided the following steps to fulfill this request:
+
+a. Create a compressed archive named mariyam.tar.gz of the /data/mariyam directory.
+
+b. Transfer the archive to the /home directory on the Storage Server.
+
+What is the task?
+
+You are required to:
+
+Create a compressed archive (mariyam.tar.gz) of the directory
+
+/data/mariyam
+
+
+Move (store) that archive in:
+
+/home
+
+
+This is performed on the Storage Server inside the Stratos Datacenter.
+
+In simple terms:
+👉 Package Mariyam’s data safely into a single compressed file and place it in a user-accessible location.
+
+Why is this required in a real enterprise environment?
+
+In enterprise systems, this type of task is very common for:
+
+Developer data handover
+
+Backup before access revocation
+
+Migration to another server
+
+Audit or compliance requests
+
+User exit / role change
+
+Instead of giving raw directory access, admins archive data to:
+
+Preserve structure
+
+Reduce size
+
+Prevent accidental modification
+
+Enable secure transfers
+
+Which server(s) does this apply to and why?
+✅ Storage Server (Nautilus Storage Server)
+
+Why?
+
+The /data directory physically resides on the storage server
+
+NAS / centralized storage is designed for shared developer data
+
+This task must be executed where the data lives, not on app or DB servers
+
+❌ Not on:
+
+App servers (stapp01/02/03)
+
+Load balancer
+
+DB server
+
+2️⃣ Prerequisites & Assumptions
+Required User Access
+
+sudo or root access is required
+
+/data is typically owned by root or restricted groups
+
+Archiving requires read access to all files
+
+✔ Recommended:
+
+sudo -i
+
+Required Files / Services
+
+Directory must exist:
+
+/data/mariyam
+
+
+tar utility must be installed
+(Default on all enterprise Linux distributions)
+
+Important Checks Before Starting
+1. Confirm directory exists
+ls -ld /data/mariyam
+
+2. Ensure sufficient disk space in /home
+df -h /home
+
+3. Confirm no active write operations (best practice)
+
+Avoid archiving while files are being modified
+
+Prevents partial or inconsistent backups
+
+3️⃣ Exact Commands (Step-by-Step)
+Step 1: Switch to root (recommended)
+sudo -i
+
+Explanation
+
+Ensures full read access
+
+Prevents permission-related failures
+
+Why this is best
+
+Enterprise systems avoid repeated sudo calls
+
+Reduces command interruption risk
+
+Step 2: Create the compressed archive
+tar -czvf mariyam.tar.gz /data/mariyam
+
+Line-by-line explanation
+
+tar → Tape Archive utility (standard in Linux)
+
+-c → Create a new archive
+
+-z → Compress using gzip
+
+-v → Verbose (shows progress, useful for admins)
+
+-f mariyam.tar.gz → Output file name
+
+/data/mariyam → Source directory
+
+Why this command is the best choice
+
+Industry standard
+
+Preserves:
+
+Permissions
+
+Ownership
+
+Directory structure
+
+Compatible across Linux systems
+
+Step 3: Move the archive to /home
+mv mariyam.tar.gz /home/
+
+Explanation
+
+Moves the archive to a user-accessible, non-system directory
+
+Why /home?
+
+Safer than /root
+
+Common location for:
+
+Downloads
+
+Transfers
+
+SFTP access
+
+4️⃣ Verification & Validation
+1. Verify archive exists
+ls -lh /home/mariyam.tar.gz
+
+Expected output (example)
+-rw-r--r-- 1 root root 120M Jan 19  mariyam.tar.gz
+
+2. Verify archive contents (without extracting)
+tar -tzf /home/mariyam.tar.gz
+
+Expected behavior
+
+Lists all files inside /data/mariyam
+
+No error messages
+
+3. Confirm archive integrity
+gzip -t /home/mariyam.tar.gz
+
+Expected output
+
+No output → archive is valid
+
+5️⃣ Errors & Troubleshooting
+❌ Error: tar: /data/mariyam: Cannot open: Permission denied
+Cause
+
+Insufficient permissions
+
+Fix
+sudo -i
+
+❌ Error: No such file or directory
+Cause
+
+Path is incorrect
+
+Fix
+ls /data
+
+
+Confirm correct directory name.
+
+❌ Error: No space left on device
+Cause
+
+/home filesystem is full
+
+Fix
+
+Free space or use an alternate mount:
+
+df -h
+
+6️⃣ Security & Best Practices
+Security Implications
+
+Archives may contain sensitive internal data
+
+Must be:
+
+Owned by root
+
+Not world-writable
+
+Transferred securely if moved off-server
+
+Why this approach is recommended
+
+Non-destructive
+
+Auditable
+
+Reversible
+
+Aligns with enterprise backup practices
+
+Alternatives (When Needed)
+
+rsync → for live sync
+
+Encrypted archive:
+
+tar -czf - /data/mariyam | gpg -c > mariyam.tar.gz.gpg
+
+7️⃣ Final Task Summary
+
+Task: Archive developer Mariyam’s data
+
+Server: Nautilus Storage Server
+
+Action: Created mariyam.tar.gz from /data/mariyam
+
+Location: /home/mariyam.tar.gz
+
+Status: ✅ Successful
