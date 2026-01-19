@@ -1,0 +1,195 @@
+A Nautilus developer has stored confidential data on the jump host within Stratos DC. To ensure security and compliance, this data must be transferred to one of the app servers. Given developers lack direct access to these servers, the system admin team has been enlisted for assistance.
+
+Copy /tmp/nautilus.txt.gpg file from jump server to App Server 1 placing it in the directory /home/web.
+
+Secure File Transfer Task
+1️⃣ Task Understanding
+🔹 What is the task?
+
+A confidential file stored on the Jump Server must be securely copied to Application Server 1 (stapp01) and placed in:
+
+/home/web
+
+
+File to copy:
+
+/tmp/nautilus.txt.gpg
+
+🔹 Why is this required in a real-world enterprise?
+
+In enterprise environments:
+
+Developers do NOT have direct access to production servers
+
+Sensitive data must not remain on jump/bastion hosts
+
+Jump servers are temporary access points, not storage locations
+
+Compliance (ISO, SOC2, PCI-DSS) requires least privilege & secure data handling
+
+👉 System Administrators act as controlled intermediaries to move data safely.
+
+🔹 Which servers does this apply to?
+Server	Role	Why
+Jump Server	Secure access gateway	Source of the confidential file
+App Server 1 (stapp01)	Application Tier	Authorized destination
+NAS / DB / LB	❌ Not involved	No role in this task
+2️⃣ Prerequisites & Assumptions
+🔹 Required Access
+
+SSH access to Jump Server
+
+SSH access to App Server 1
+
+Ability to write to /home/web
+(either ownership or sudo access)
+
+🔹 Required Files & Services
+
+File exists:
+
+/tmp/nautilus.txt.gpg
+
+
+SSH service running on both servers
+
+Network connectivity between jump host and app server
+
+🔹 Important Checks Before Starting
+ls -l /tmp/nautilus.txt.gpg
+
+
+✔ Confirms file exists
+✔ Confirms permissions
+✔ Confirms file size (sanity check)
+
+3️⃣ Exact Commands (Step-by-Step)
+
+✅ Production-safe approach: scp
+(encrypted, audited, standard enterprise tool)
+
+🔹 Step 1: Login to Jump Server
+ssh nautilus@jump-server
+
+
+Explanation:
+
+Establishes a secure SSH session
+
+All transfers must originate from the jump host
+
+Why this is best:
+
+Jump server enforces audit logging
+
+Direct access to app servers is restricted
+
+🔹 Step 2: Copy File to App Server 1
+scp /tmp/nautilus.txt.gpg web@stapp01:/home/web/
+
+Line-by-Line Explanation
+Part	Meaning
+scp	Secure Copy Protocol
+/tmp/nautilus.txt.gpg	Source file
+web@stapp01	Destination user & server
+/home/web/	Target directory
+
+Why this command is best:
+
+Encrypted in transit (SSH)
+
+No temporary files created
+
+Widely approved in enterprise environments
+
+Simple, auditable, reliable
+
+🔹 (Optional) If Permission Is Denied
+
+Login to App Server and fix ownership:
+
+ssh web@stapp01
+sudo chown web:web /home/web
+
+4️⃣ Verification & Validation
+🔹 Verify on App Server 1
+ssh web@stapp01
+ls -l /home/web/nautilus.txt.gpg
+
+✅ Expected Output Example
+-rw-r--r-- 1 web web 2048 Jan 19  nautilus.txt.gpg
+
+🔹 Verify File Integrity (Optional but Professional)
+
+On jump server:
+
+sha256sum /tmp/nautilus.txt.gpg
+
+
+On app server:
+
+sha256sum /home/web/nautilus.txt.gpg
+
+
+✔ Hashes must match
+
+5️⃣ Errors & Troubleshooting
+❌ Error: No such file or directory
+
+Cause: File path incorrect
+Fix:
+
+ls -l /tmp/nautilus.txt.gpg
+
+❌ Error: Permission denied
+
+Cause: No write access to /home/web
+Fix:
+
+sudo chown web:web /home/web
+
+❌ Error: Connection timed out
+
+Cause: SSH blocked / network issue
+Fix:
+
+ping stapp01
+ss -tlnp | grep ssh
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+.gpg file remains encrypted
+
+Transfer happens over SSH
+
+No exposure to unauthorized users
+
+✅ Why This Approach Is Recommended
+
+Least privilege
+
+No data duplication
+
+No SCP alternatives with weaker security
+
+Fully auditable
+
+🔄 Alternatives (Enterprise Scenarios)
+Method	When Used
+rsync -avz	Large files / resumable
+SFTP	Automated pipelines
+Ansible	Bulk or repeatable operations
+7️⃣ Final Task Summary
+
+What was done: Securely transferred encrypted file
+
+From: Jump Server
+
+To: App Server 1 (stapp01)
+
+Destination: /home/web
+
+Result: File successfully copied and verified
+
+✅ Status: Successful
