@@ -1,0 +1,292 @@
+Following security audits, the xFusionCorp Industries security team has rolled out new protocols, including the restriction of direct root SSH login.
+Your task is to disable direct SSH root login on all app servers within the Stratos Datacenter.
+
+Task Overview
+
+Following internal security audits, xFusionCorp Industries mandated the removal of direct SSH access for the root user across all application servers. This task enforces the principle of least privilege and improves auditability by requiring administrators to log in using named user accounts with controlled privilege escalation.
+
+Environment Details
+
+Project: Nautilus
+
+Datacenter: Stratos (North America)
+
+Tier Affected: Application Tier
+
+Servers: stapp01, stapp02, stapp03
+
+Operating System: Enterprise Linux (RHEL/CentOS/Alma/Rocky family)
+
+Service Modified: OpenSSH (sshd)
+
+Commands & Explanations
+1. Switch to root using sudo
+sudo -i
+
+Opens a root shell using sudo
+
+Maintains accountability through sudo logs
+
+2. Backup SSH daemon configuration
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak_$(date +%F)
+
+Creates a timestamped backup
+
+Enables quick rollback in case of misconfiguration
+
+3. Edit SSH configuration
+vi /etc/ssh/sshd_config
+
+Modify or add the following directive:
+
+PermitRootLogin no
+
+Explicitly disables SSH login for the root user
+
+Overrides default or inherited settings
+
+4. Validate SSH configuration syntax
+sshd -t
+
+Performs a syntax check
+
+Prevents service restart with invalid configuration
+
+5. Restart SSH service
+systemctl restart sshd
+
+Applies configuration changes
+
+Uses systemd for controlled service management
+
+6. Check SSH service status
+systemctl status sshd
+
+Confirms SSH daemon is active and running
+
+Validation
+Root login test (should fail)
+ssh root@<server_ip>
+
+Expected Output:
+
+Permission denied, please try again.
+Non-root user login test
+ssh devadmin@<server_ip>
+
+Confirms standard user access is unaffected
+
+Configuration confirmation
+grep -i PermitRootLogin /etc/ssh/sshd_config
+
+Expected Output:
+
+PermitRootLogin no
+Common Errors & Troubleshooting
+Issue	Cause	Resolution
+SSH service fails to restart	Syntax error	Run sshd -t and fix config
+Locked out of server	No sudo user	Use console/Jumphost access
+Root login still works	Duplicate config entries	Ensure no conflicting PermitRootLogin yes
+Security Learnings
+
+Root access should never be exposed directly over the network
+
+Named user accounts improve traceability
+
+SSH hardening is a baseline compliance requirement (ISO 27001, CIS Benchmarks)
+
+Final Status
+
+Servers Updated: stapp01, stapp02, stapp03
+
+Change Implemented: Direct root SSH login disabled
+
+Result: Secure, auditable SSH access model enforced
+
+Status: ✅ Successful
+
+Excellent enterprise-grade task, Ranjith. I’ll walk you through this exactly as a Senior Linux System Administrator / DevOps Engineer would explain it in a real production environment.
+
+1️⃣ Task Understanding
+✅ What is the task?
+
+Disable direct SSH login for the root user on all application servers (stapp01, stapp02, stapp03) by configuring the SSH daemon securely.
+
+🏢 Why this is required in real-world enterprises
+
+Direct root SSH login is one of the highest-risk security practices.
+
+Enterprises disable it because:
+
+Root has unlimited privileges → single compromise = full server takeover
+
+Root logins are not traceable to individuals
+
+Brute-force attacks target root first
+
+Compliance standards require named-user access
+
+This change enforces:
+
+Least privilege
+
+Auditability
+
+Defense-in-depth
+
+🖥️ Which servers this applies to (and why)
+
+Application Servers:
+
+stapp01
+
+stapp02
+
+stapp03
+
+Why:
+
+They are internet-facing or load-balanced
+
+Highest attack surface
+
+SSH is actively used for administration
+
+2️⃣ Prerequisites & Assumptions
+🔑 Required access
+
+Non-root user with sudo privileges
+
+Root access via sudo, not direct SSH
+
+📂 Required files & services
+
+SSH config:
+/etc/ssh/sshd_config
+
+Service:
+sshd (OpenSSH daemon)
+
+🔍 Important checks before starting
+whoami
+sudo -l
+systemctl status sshd
+
+
+Ensure:
+
+You are not logged in as root
+
+You have sudo
+
+SSH service is running
+
+3️⃣ Exact Commands (Step-by-Step)
+
+Perform the following on each app server: stapp01, stapp02, stapp03
+
+🔹 Step 1: Switch to root using sudo
+sudo -i
+
+
+Explanation:
+
+Elevates privileges safely
+
+Logged via sudo for auditing
+
+Why this is best practice
+
+Root access is controlled and traceable
+
+🔹 Step 2: Backup SSH configuration
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak_$(date +%F)
+
+
+Explanation:
+
+Creates a dated backup
+
+Enables rollback
+
+Enterprise reason
+
+Change management & rollback safety
+
+🔹 Step 3: Edit SSH configuration
+vi /etc/ssh/sshd_config
+
+
+Set or update:
+
+PermitRootLogin no
+
+
+Explanation:
+
+Explicitly blocks root SSH access
+
+Why this approach
+
+Simple
+
+Supported
+
+CIS-compliant
+
+🔹 Step 4: Validate SSH config (CRITICAL)
+sshd -t
+
+
+Expected output:
+No output (means valid)
+
+Why this is mandatory
+
+Prevents SSH lockout due to syntax errors
+
+🔹 Step 5: Restart SSH service
+systemctl restart sshd
+
+
+Explanation:
+
+Applies the new security policy
+
+🔹 Step 6: Confirm service status
+systemctl status sshd
+
+4️⃣ Verification & Validation
+❌ Root login test (must fail)
+ssh root@<server_ip>
+
+
+Expected:
+
+Permission denied, please try again.
+
+✅ Normal user login test
+ssh devadmin@<server_ip>
+
+🔍 Confirm config
+grep -i PermitRootLogin /etc/ssh/sshd_config
+
+
+Expected:
+
+PermitRootLogin no
+
+5️⃣ Errors & Troubleshooting
+🚨 Common mistakes
+Issue	Cause	Fix
+SSH won’t restart	Syntax error	Run sshd -t
+Locked out	No sudo user	Use console/Jumphost
+Root still logs in	Duplicate config	Remove conflicting entries
+6️⃣ Security & Best Practices
+🔐 Security implications
+
+Eliminates root brute-force attacks
+
+Improves forensic traceability
+
+Meets compliance standards (CIS, ISO 27001)
