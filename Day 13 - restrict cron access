@@ -1,0 +1,245 @@
+In alignment with security compliance standards, the Nautilus project team has opted to impose restrictions on crontab access. Specifically, only designated users will be permitted to create or update cron jobs. Configure crontab access on App Server 3 as follows: Allow crontab access to mariyam user while denying access to the jerome user.
+
+1️⃣ Task Understanding
+🔹 What is the task?
+
+You need to restrict access to crontab on App Server 3 (stapp03) so that:
+
+✅ User mariyam is allowed to create and modify cron jobs
+
+❌ User jerome is explicitly denied crontab access
+
+This is done using cron access control files provided by Linux.
+
+🔹 Why is this required in an enterprise environment?
+
+In real-world production systems:
+
+Cron jobs can:
+
+Execute scripts automatically
+
+Modify files, databases, or services
+
+Consume CPU, memory, or disk
+
+Unrestricted cron access can lead to:
+
+Security violations
+
+Accidental outages
+
+Compliance failures (ISO, SOC2, PCI-DSS)
+
+Restricting cron access ensures:
+
+Only approved users can automate tasks
+
+Reduced attack surface
+
+Better audit and compliance control
+
+🔹 Which server does this apply to and why?
+
+Server: App Server 3 (stapp03)
+
+Reason:
+The task explicitly targets App Server 3 where application-related cron jobs may run.
+Enterprise policy may differ per server depending on workload and risk.
+
+2️⃣ Prerequisites & Assumptions
+🔹 Required Access
+
+Root or sudo privileges
+(cron access files are system-level)
+
+🔹 Required Files
+
+/etc/cron.allow
+
+/etc/cron.deny
+
+These files control who can or cannot use crontab
+
+🔹 Important Checks Before Starting
+
+Confirm you are on App Server 3
+
+Verify users mariyam and jerome exist
+
+Ensure crond service is installed and running
+
+3️⃣ Exact Commands (Step-by-Step)
+🔐 Step 1: Switch to App Server 3
+ssh stapp03
+
+
+Explanation:
+Connects securely to App Server 3 where the configuration must be applied.
+
+🔐 Step 2: Gain Root Privileges
+sudo -i
+
+
+Why:
+Only root can modify cron access control files under /etc.
+
+🔍 Step 3: Verify Users Exist
+id mariyam
+id jerome
+
+
+Explanation:
+Confirms both users exist on the system.
+Cron access rules apply only to valid users.
+
+📄 Step 4: Create /etc/cron.allow
+vi /etc/cron.allow
+
+
+Add:
+
+mariyam
+
+
+Explanation (Line-by-Line):
+
+cron.allow → Whitelist file
+
+Only users listed here can use crontab
+
+This file takes priority over cron.deny
+
+✅ Best practice: Use cron.allow instead of only cron.deny
+
+🚫 Step 5: Create /etc/cron.deny
+vi /etc/cron.deny
+
+
+Add:
+
+jerome
+
+
+Explanation:
+
+Explicitly blocks jerome
+
+Acts as a secondary safeguard
+
+Helps with audit clarity
+
+🔐 Step 6: Secure File Permissions
+chmod 600 /etc/cron.allow /etc/cron.deny
+chown root:root /etc/cron.allow /etc/cron.deny
+
+
+Why this is critical:
+
+Prevents users from modifying access lists
+
+Required by security benchmarks (CIS, STIG)
+
+4️⃣ Verification & Validation
+✅ Verify Allowed User (mariyam)
+su - mariyam
+crontab -l
+
+
+Expected Output:
+
+Either existing cron jobs
+
+Or:
+
+no crontab for mariyam
+
+
+✅ No permission error = access allowed
+
+❌ Verify Denied User (jerome)
+su - jerome
+crontab -l
+
+
+Expected Output:
+
+You (jerome) are not allowed to use this program (crontab)
+
+
+✅ Confirms restriction is enforced
+
+🔍 Check Cron Service
+systemctl status crond
+
+
+Expected:
+active (running)
+
+5️⃣ Errors & Troubleshooting
+❌ Error: User can still access crontab
+
+Cause:
+
+/etc/cron.allow missing or empty
+
+Fix:
+
+echo mariyam > /etc/cron.allow
+
+❌ Error: Permission denied while editing files
+
+Cause:
+Not using root
+
+Fix:
+
+sudo -i
+
+❌ Error: cron not enforcing rules
+
+Cause:
+Incorrect file permissions
+
+Fix:
+
+chmod 600 /etc/cron.allow /etc/cron.deny
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+Prevents unauthorized automation
+
+Reduces risk of privilege misuse
+
+Ensures predictable system behavior
+
+✅ Why This Approach Is Recommended
+
+cron.allow = default deny policy
+
+Aligns with least privilege principle
+
+Industry-standard cron access control
+
+🔄 Alternatives
+
+Role-based access via automation tools (Ansible)
+
+Centralized scheduling (Jenkins, Rundeck)
+
+SELinux-based controls (advanced setups)
+
+7️⃣ Final Task Summary
+
+Action: Restricted crontab access
+
+Server: App Server 3 (stapp03)
+
+Allowed User: mariyam
+
+Denied User: jerome
+
+Method: /etc/cron.allow & /etc/cron.deny
+
+Status: ✅ Successful
