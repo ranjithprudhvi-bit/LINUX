@@ -1,0 +1,199 @@
+In the Stratos Datacenter, our Storage server is encountering performance degradation due to excessive processes held by the nfsuser user. To mitigate this issue, we need to enforce limitations on its maximum processes. Please set the maximum process limits as specified below:
+a. Set the soft limit to 1025
+b. Set the hard limit to 2024
+
+Enforcing Process Limits for nfsuser on Storage Server
+1️⃣ Task Understanding
+🔹 What is the task?
+
+We need to limit the maximum number of processes that the Linux user nfsuser can run on the Storage Server by configuring:
+
+Soft limit: 1025
+
+Hard limit: 2024
+
+This is done using Linux PAM limits.
+
+🔹 Why is this required in a real-world enterprise?
+
+In enterprise environments:
+
+NFS users often handle multiple mounts, file operations, and background jobs
+
+If a single user spawns too many processes, it can:
+
+Exhaust system resources (CPU, memory, PIDs)
+
+Degrade performance for other critical services
+
+Cause system instability or denial-of-service scenarios
+
+By enforcing process limits:
+
+We protect the storage server
+
+We ensure fair resource usage
+
+We maintain platform stability and SLA compliance
+
+🔹 Which server does this apply to?
+
+✅ Storage Server only
+
+Why?
+
+The issue is reported on the Storage server
+
+nfsuser is typically used for NFS-related operations
+
+Limits should be applied only where the problem exists, not globally
+
+2️⃣ Prerequisites & Assumptions
+🔹 Required Access
+
+Root or sudo access
+(/etc/security/limits.conf is a privileged file)
+
+🔹 Required Files & Services
+
+File:
+
+/etc/security/limits.conf
+
+
+PAM must be enabled (default on enterprise Linux)
+
+User nfsuser must already exist
+
+🔹 Important Pre-Checks
+✔️ Confirm user exists
+id nfsuser
+
+✔️ Check current process limits (optional)
+su - nfsuser
+ulimit -u
+exit
+
+✔️ Backup configuration file (mandatory in production)
+cp /etc/security/limits.conf /etc/security/limits.conf.bak
+
+3️⃣ Exact Commands (Step-by-Step)
+🔹 Step 1: Open limits configuration file
+vi /etc/security/limits.conf
+
+
+Explanation:
+
+This file defines resource limits per user or group
+
+It is processed by PAM at login/session start
+
+vi is used as a production-standard editor
+
+🔹 Step 2: Add process limits for nfsuser
+
+Add the following lines at the end of the file:
+
+nfsuser  soft  nproc  1025
+nfsuser  hard  nproc  2024
+
+🔹 Line-by-line explanation
+Field	Meaning
+nfsuser	User to which the rule applies
+soft	Warning limit (can be temporarily exceeded)
+hard	Absolute limit (cannot be exceeded)
+nproc	Maximum number of processes
+1025 / 2024	Required limits
+🔹 Why this is the best approach
+
+Uses PAM-native mechanism
+
+Persistent across reboots
+
+Granular (user-specific)
+
+Industry-standard for Linux servers
+
+4️⃣ Verification & Validation
+🔹 Step 1: Log in as nfsuser
+su - nfsuser
+
+🔹 Step 2: Verify process limits
+ulimit -Su
+ulimit -Hu
+
+🔹 Expected Output
+1025
+2024
+
+
+-Su → Soft limit
+
+-Hu → Hard limit
+
+🔹 Step 3: Confirm no errors
+
+No login warnings
+
+No PAM errors in logs:
+
+tail -f /var/log/secure
+
+
+Exit user session:
+
+exit
+
+5️⃣ Errors & Troubleshooting
+❌ Common Mistakes
+Issue	Cause	Fix
+Limits not applied	User didn’t re-login	Log out and log back in
+Wrong file edited	Edited limits.d incorrectly	Use /etc/security/limits.conf
+Typo in username	Incorrect entry	Verify with id nfsuser
+Limits ignored	PAM not enabled	Ensure pam_limits.so is loaded
+🔹 Check PAM configuration (if limits don’t work)
+grep pam_limits /etc/pam.d/common-session
+
+
+Expected:
+
+session required pam_limits.so
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+Prevents fork bombs
+
+Protects system PID space
+
+Reduces attack surface from compromised service accounts
+
+✅ Why this approach is recommended
+
+Least privilege principle
+
+User-level isolation
+
+No impact on other services or users
+
+🔁 Alternatives (when applicable)
+
+cgroups / systemd slices (advanced environments)
+
+Per-service limits using systemd unit files
+
+For NFS users, PAM limits are simplest and safest.
+
+7️⃣ Final Task Summary
+
+✔️ Process limits enforced using PAM
+
+✔️ User: nfsuser
+
+✔️ Server: Storage Server
+
+✔️ Soft limit: 1025
+
+✔️ Hard limit: 2024
+
+Status: ✅ Successful
