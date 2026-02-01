@@ -1,0 +1,266 @@
+In the daily standup, it was noted that the timezone settings across the Nautilus Application Servers in the Stratos Datacenter are inconsistent with the local datacenter's timezone, currently set to Pacific/Apia. Synchronize the timezone settings to match the local datacenter's timezone (Pacific/Apia).
+
+Timezone Synchronization on Nautilus Application Servers
+1️⃣ Task Understanding
+🔹 What is the task?
+
+Synchronize the timezone configuration on all Nautilus Application Servers so that they match the local datacenter timezone, which is:
+
+Pacific/Apia
+
+🔹 Why is this required in a real-world enterprise?
+
+Timezone consistency is critical in production environments because:
+
+Log correlation across servers (Apache, PHP, system logs)
+
+Database timestamps (MariaDB relies on system time)
+
+Cron jobs & scheduled tasks
+
+Monitoring & alerting accuracy
+
+Audit & compliance requirements
+
+If different servers use different timezones:
+
+Logs become misleading
+
+Incident timelines break
+
+SLA and RCA reports become inaccurate
+
+👉 This is a very common enterprise hygiene task.
+
+🔹 Which servers does this apply to and why?
+
+✅ Application Servers only:
+
+stapp01
+
+stapp02
+
+stapp03
+
+Why?
+
+They host Apache + PHP
+
+They generate application logs
+
+They run cron jobs
+
+They must be time-aligned for load-balanced traffic
+
+Load balancer / DB may have separate change windows, but this task explicitly targets application servers.
+
+2️⃣ Prerequisites & Assumptions
+🔐 Required Access
+
+sudo access (recommended)
+
+Root access also works but sudo is best practice
+
+📂 Required Files / Services
+
+systemd (for timedatectl)
+
+/etc/localtime
+
+/usr/share/zoneinfo/
+
+✅ Pre-checks Before Starting
+
+Confirm current timezone
+
+Confirm OS uses systemd
+
+Ensure no time-sensitive deployments running
+
+3️⃣ Exact Commands (Step-by-Step)
+
+Perform these steps on each app server (stapp01, stapp02, stapp03)
+
+🔹 Step 1: Check current timezone
+timedatectl
+
+Explanation (line-by-line)
+
+timedatectl
+→ systemd utility to view/manage time & timezone
+
+Why this command?
+
+Enterprise-standard
+
+Non-intrusive
+
+No file manipulation
+
+Safe in production
+
+Example Output (Before Fix)
+Time zone: UTC (UTC, +0000)
+System clock synchronized: yes
+NTP service: active
+
+🔹 Step 2: List available timezones (verification)
+timedatectl list-timezones | grep Pacific
+
+Explanation
+
+Lists all supported IANA timezones
+
+grep Pacific filters relevant entries
+
+Why this matters?
+
+Prevents typos
+
+Ensures Pacific/Apia exists on system
+
+Expected entry:
+
+Pacific/Apia
+
+🔹 Step 3: Set timezone to Pacific/Apia
+sudo timedatectl set-timezone Pacific/Apia
+
+Explanation
+
+sudo → required to modify system time
+
+set-timezone → safely updates:
+
+/etc/localtime
+
+/etc/timezone
+
+No reboot required
+
+Why this is the best choice
+
+Official systemd method
+
+Updates all services correctly
+
+Safer than manual symlink changes
+
+Recommended by Red Hat / Ubuntu / SUSE
+
+🔹 Step 4: Ensure time sync is enabled
+sudo timedatectl set-ntp true
+
+Explanation
+
+Ensures system clock stays accurate
+
+Uses NTP or chrony underneath
+
+Enterprise Reason
+
+Prevents time drift
+
+Required for compliance & monitoring
+
+4️⃣ Verification & Validation
+✅ Verify timezone
+timedatectl
+
+Expected Output
+Time zone: Pacific/Apia (WST, +1300)
+System clock synchronized: yes
+NTP service: active
+
+✅ Verify local time
+date
+
+
+Expected example:
+
+Mon Feb 1 13:45:12 WST 2026
+
+✅ Cross-server validation
+
+Run date on:
+
+stapp01
+
+stapp02
+
+stapp03
+
+👉 All outputs must match (seconds difference acceptable)
+
+5️⃣ Errors & Troubleshooting
+❌ Error 1: timedatectl: command not found
+
+Cause
+
+Non-systemd OS (rare)
+
+Fix
+
+ls -ld /usr/share/zoneinfo/Pacific/Apia
+ln -sf /usr/share/zoneinfo/Pacific/Apia /etc/localtime
+
+❌ Error 2: Failed to set time zone
+
+Cause
+
+No sudo privileges
+
+Fix
+
+Switch to authorized user
+
+Request sudo access
+
+❌ Error 3: Time changes back after reboot
+
+Cause
+
+NTP disabled or overridden
+
+Fix
+
+sudo timedatectl set-ntp true
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+No data exposure
+
+No service restart required
+
+Safe live-change operation
+
+✅ Best Practices Followed
+
+Used timedatectl (not manual edits)
+
+Verified before & after
+
+Enabled NTP sync
+
+No reboot required
+
+🔄 Alternatives (Not Recommended)
+
+Manual symlink of /etc/localtime
+
+Editing /etc/timezone directly
+
+7️⃣ Final Task Summary
+
+Task: Synchronize timezone
+
+Servers: stapp01, stapp02, stapp03
+
+Timezone: Pacific/Apia
+
+Method: timedatectl
+
+Impact: Zero downtime
+
+Status: ✅ Successful
