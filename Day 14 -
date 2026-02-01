@@ -1,0 +1,241 @@
+With the installation of new tools on the app servers within the Stratos Datacenter, certain functionalities now necessitate graphical user interface (GUI) access. Adjust the default runlevel on all App servers in Stratos Datacenter to enable GUI booting by default. It's imperative not to initiate a server reboot after completing this task.
+Task Understanding
+🔹 What is the task?
+
+We need to change the default runlevel (systemd target) on all Application servers so that they boot into GUI mode (graphical.target) by default.
+
+⚠️ Important constraint:
+No server reboot must be performed as part of this task.
+
+🔹 Why is this required in a real enterprise environment?
+
+In enterprise environments:
+
+New GUI-dependent tools (monitoring dashboards, IDEs, browser-based utilities, or vendor installers) may be deployed
+
+Some operations or support teams require GUI access for:
+
+Visual debugging
+
+Application testing
+
+Vendor-provided admin tools
+
+Setting the default runlevel ensures consistency across reboots without manual intervention
+
+This change ensures:
+
+Servers automatically boot into GUI mode
+
+No disruption to running services
+
+Compliance with operational requirements
+
+🔹 Which servers does this apply to?
+
+Application Tier Servers only:
+
+stapp01
+
+stapp02
+
+stapp03
+
+❌ Not applied to:
+
+DB Server (MariaDB)
+
+Load Balancer (Nginx)
+
+Jenkins / Backup / Storage servers
+
+Reason:
+Only App servers require GUI for newly installed tools.
+
+2️⃣ Prerequisites & Assumptions
+🔹 Required access
+
+sudo access (recommended)
+
+Or root access
+
+The task modifies system-wide boot configuration.
+
+🔹 Required services / components
+
+System must be using systemd (default on RHEL/CentOS/Alma/Rocky)
+
+GUI packages already installed (task does not include installation)
+
+🔹 Important checks before starting
+ps -p 1 -o comm=
+
+
+✔️ Confirms the system is using systemd
+
+systemctl get-default
+
+
+✔️ Check current default target (usually multi-user.target)
+
+3️⃣ Exact Commands (Step-by-Step)
+
+Perform the same steps on all app servers:
+
+stapp01
+
+stapp02
+
+stapp03
+
+🔹 Step 1: Log into the server
+ssh <user>@stapp01
+
+
+Explanation:
+
+Securely connects to the application server
+
+Repeat for all app servers
+
+Why this is best practice:
+SSH is the enterprise standard for secure remote administration.
+
+🔹 Step 2: Check current default runlevel
+systemctl get-default
+
+
+Explanation:
+
+Displays the current systemd default target
+
+Typically shows multi-user.target (CLI mode)
+
+Why:
+Always validate the current state before making production changes.
+
+🔹 Step 3: Set GUI as default boot target
+sudo systemctl set-default graphical.target
+
+Line-by-line explanation:
+
+systemctl → systemd management tool
+
+set-default → modifies the default boot target
+
+graphical.target → enables GUI boot (equivalent to runlevel 5)
+
+Why this is the best choice:
+
+Persistent across reboots
+
+Non-disruptive (no reboot required)
+
+Official, supported systemd method
+
+Avoids manual symlink manipulation
+
+📌 No services are restarted
+📌 No reboot triggered
+
+🔹 Step 4: Repeat on remaining app servers
+ssh <user>@stapp02
+sudo systemctl set-default graphical.target
+
+ssh <user>@stapp03
+sudo systemctl set-default graphical.target
+
+4️⃣ Verification & Validation
+🔹 Verify default target
+systemctl get-default
+
+✅ Expected output:
+graphical.target
+
+🔹 Verify symlink mapping
+ls -l /etc/systemd/system/default.target
+
+✅ Expected output:
+/etc/systemd/system/default.target -> /usr/lib/systemd/system/graphical.target
+
+🔹 Confirm no errors
+systemctl status graphical.target
+
+
+Ensures target exists
+
+No failed dependency issues
+
+5️⃣ Errors & Troubleshooting
+❌ Error: graphical.target not found
+Cause:
+
+GUI packages not installed
+
+Fix:
+yum groupinstall "Server with GUI" -y
+
+
+(Only if explicitly required by change request)
+
+❌ Error: Access denied
+Cause:
+
+Insufficient privileges
+
+Fix:
+sudo -i
+
+
+or ensure sudo access is granted.
+
+❌ Mistake: Rebooting the server
+Impact:
+
+Violates task requirement
+
+May disrupt production services
+
+Prevention:
+
+Do NOT run reboot, shutdown, or init 5
+
+6️⃣ Security & Best Practices
+🔹 Security implications
+
+GUI increases:
+
+Attack surface
+
+Resource usage
+
+Should only be enabled when business-justified
+
+🔹 Why this approach is recommended
+
+✔ Persistent
+✔ Reversible
+✔ systemd-native
+✔ No downtime
+
+🔹 Alternative (NOT used here)
+systemctl isolate graphical.target
+
+
+❌ Not persistent
+❌ Immediately switches runlevel
+❌ Risky in production
+
+7️⃣ Final Task Summary
+
+Action: Default runlevel changed to GUI
+
+Servers: stapp01, stapp02, stapp03
+
+Method: systemctl set-default graphical.target
+
+Reboot: ❌ Not performed
+
+Impact: None to running services
+
+✅ Status: Successful
