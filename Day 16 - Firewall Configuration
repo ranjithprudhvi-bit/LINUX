@@ -1,0 +1,260 @@
+The Nautilus system admins team has rolled out a web UI application for their backup utility on the Nautilus backup server within the Stratos Datacenter. This application operates on port 3003, and firewalld is active on the server. To meet operational needs, the following requirements have been identified: Allow all incoming connections on port 3003/tcp. Ensure the zone is set to public.
+
+Firewalld Configuration for Backup Web UI (Port 3003)
+1️⃣ Task Understanding
+🔎 What is the task?
+
+We need to allow incoming TCP connections on port 3003 using firewalld, ensuring the active zone is public on the Nautilus backup server.
+
+🏢 Why is this required in a real-world enterprise?
+
+The backup team deployed a web-based UI for a backup utility.
+
+The application listens on port 3003.
+
+Since firewalld is enabled, traffic to this port is blocked by default.
+
+Without opening the port:
+
+Admins cannot access the UI
+
+Monitoring, restore, and backup management fail
+
+In enterprise environments, explicit firewall rules are mandatory for:
+
+Security compliance
+
+Auditing
+
+Controlled access
+
+🖥️ Which server does this apply to?
+
+Backup Server
+
+Reason:
+
+The backup UI application is hosted only on the backup server
+
+Other servers (app, DB, LB) are not involved
+
+2️⃣ Prerequisites & Assumptions
+🔑 Required Access
+
+sudo or root access
+
+Firewalld rules cannot be modified by a normal user
+
+🧰 Required Services
+
+firewalld service must be:
+
+Installed
+
+Running
+
+Enabled
+
+🔍 Important Pre-checks
+
+Before making any changes:
+
+Confirm firewalld status
+
+Confirm active zone
+
+Confirm port is not already allowed
+
+3️⃣ Exact Commands (Step-by-Step)
+✅ Step 1: Check firewalld status
+sudo systemctl status firewalld
+
+
+Explanation
+
+Verifies that firewalld is running
+
+Prevents applying rules to a stopped service
+
+Why this is best practice
+
+Avoids silent failures
+
+Mandatory in production change workflows
+
+✅ Step 2: Identify the active zone
+sudo firewall-cmd --get-active-zones
+
+
+Explanation
+
+Shows active zone(s) and associated interfaces
+
+We must ensure the zone is public
+
+Expected Output
+
+public
+  interfaces: eth0
+
+✅ Step 3: Set default zone to public (if required)
+sudo firewall-cmd --set-default-zone=public
+
+
+Explanation
+
+Ensures consistency across reboots and interfaces
+
+Makes public the default security posture
+
+Why this is recommended
+
+public is restrictive yet suitable for externally accessible services
+
+✅ Step 4: Allow port 3003/tcp permanently
+sudo firewall-cmd --zone=public --add-port=3003/tcp --permanent
+
+
+Line-by-line Explanation
+
+--zone=public → Applies rule to public zone
+
+--add-port=3003/tcp → Allows TCP traffic on port 3003
+
+--permanent → Persists rule after reboot
+
+Why this is the best choice
+
+Explicit port-based rule
+
+No unnecessary services exposed
+
+Persistent and auditable
+
+✅ Step 5: Reload firewalld
+sudo firewall-cmd --reload
+
+
+Explanation
+
+Applies permanent rules to runtime
+
+Required after any --permanent change
+
+4️⃣ Verification & Validation
+🔍 Verify allowed ports
+sudo firewall-cmd --zone=public --list-ports
+
+
+Expected Output
+
+3003/tcp
+
+🔍 Verify zone configuration
+sudo firewall-cmd --get-default-zone
+
+
+Expected Output
+
+public
+
+🔍 Verify service is reachable (local test)
+ss -tulnp | grep 3003
+
+
+Expected Output Example
+
+LISTEN 0 128 0.0.0.0:3003
+
+🌐 Functional Validation
+
+Open browser:
+
+http://<backup-server-ip>:3003
+
+
+Backup web UI should load successfully
+
+5️⃣ Errors & Troubleshooting
+❌ Error: firewalld not running
+FirewallD is not running
+
+
+Fix
+
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
+❌ Port not visible after reload
+
+Cause
+
+Forgot --permanent
+
+Fix
+
+Re-add rule with --permanent
+
+Reload firewalld
+
+❌ Application still inaccessible
+
+Checks
+
+App listening on correct port
+
+SELinux blocking traffic
+
+SELinux Test
+
+getenforce
+
+
+Temporary test
+
+sudo setenforce 0
+
+
+(Do not leave disabled in production)
+
+6️⃣ Security & Best Practices
+🔐 Security Implications
+
+Exposes a management UI
+
+Must be protected by:
+
+Authentication
+
+IP restrictions (if possible)
+
+HTTPS (recommended)
+
+✅ Why this approach is recommended
+
+Uses native firewalld
+
+No iptables hacks
+
+Persistent, auditable, compliant
+
+🔁 Alternatives
+
+Restrict access to specific IPs:
+
+--add-rich-rule
+
+
+Use reverse proxy (Nginx) with TLS
+
+7️⃣ Final Task Summary
+
+What was done: Allowed inbound TCP traffic on port 3003
+
+Server: Nautilus Backup Server
+
+Firewall Zone: public
+
+Result: Backup Web UI accessible securely
+
+Status: ✅ Successful
